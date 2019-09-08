@@ -16,9 +16,16 @@ database = firebase.firestore()
 
 // Define what happens when the submit button is clicked
 function submitButtonClick() {
-  field = document.getElementById("field1");
-  sendText(field.value)
-  field.value = null;
+  if(isUserSignedIn()){
+    field = document.getElementById("field1");
+    sendText(field.value);
+    field.value = null;
+    console.log("User Auth Check Good!");
+  }
+  else{
+    document.getElementById("errors").innerHTML = "ERROR: User is not signed in";
+    console.error("User Auth Check Bad!")
+  }
 }
 
 // Send text textContent to the firestore "texts" collection under a pseudorandom ID
@@ -32,16 +39,35 @@ function sendText(textContent) {
   });
 }
 
-/**
- * Fancy ID generator that creates 20-character string identifiers with the following properties:
- *
- * 1. They're based on timestamp so that they sort *after* any existing ids.
- * 2. They contain 72-bits of random data after the timestamp so that IDs won't collide with other clients' IDs.
- * 3. They sort *lexicographically* (so the timestamp is converted to characters that will sort properly).
- * 4. They're monotonically increasing.  Even if you generate more than one in the same timestamp, the
- *    latter ones will sort after the former ones.  We do this by using the previous random bits
- *    but "incrementing" them by 1 (only in the case of a timestamp collision).
- */
+function loadTexts() {
+  // Create the query to load the last 12 messages and listen for new ones.
+  var query = firebase.firestore()
+                  .collection('texts')
+                  .orderBy('timestamp', 'desc')
+                  .limit(12);
+  
+  // Start listening to the query.
+  query.onSnapshot(function(snapshot) {
+    snapshot.docChanges().forEach(function(change) {
+      if (change.type === 'removed') {
+        deleteMessage(change.doc.id);
+      } else {
+        if(change.doc.data().timestamp != null){     
+          var message = change.doc.data();
+          var textRow = document.createElement("TR");
+          var textData = document.createElement("TD");
+          textRow.appendChild(textData);
+          var date = epochToJsDate(message.timestamp.seconds)
+          var textInner = document.createTextNode("(" + date.toUTCString() + ") " + message.text);
+          textData.appendChild(textInner);
+          document.getElementById("texts").appendChild(textRow);
+        }
+      }
+    });
+  });
+}
+
+// Random number generator for push IDs
 generatePushID = (function() {
     // Modeled after base64 web-safe chars, but ordered by ASCII.
     var PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
@@ -93,6 +119,32 @@ generatePushID = (function() {
 // Initialize the FirebaseUI Widget using Firebase.
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
+function epochToJsDate(ts){
+  // ts = epoch timestamp
+  // returns date obj
+  return new Date(ts*1000);
+}
+
+function jsDateToEpoch(d){
+  // d = javascript date obj
+  // returns epoch timestamp
+  return (d.getTime()-d.getMilliseconds())/1000;
+}
+
+function signIn() {
+  // Sign into Firebase using popup auth & Google as the identity provider.
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider);
+}
+
+function signOut() {
+  // Sign out of Firebase.
+  firebase.auth().signOut();
+}
+// Returns true if a user is signed-in.
+function isUserSignedIn() {
+  return !!firebase.auth().currentUser;
+}
 ui.start('#firebaseui-auth-container', {
   signInOptions: [{
     provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
@@ -133,3 +185,4 @@ ui.start('#firebaseui-auth-container', {
   ],
   // Other config options...
 });
+loadTexts();

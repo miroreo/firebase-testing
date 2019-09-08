@@ -38,10 +38,17 @@
   </head>
   <body>
     <h1>Testing Site</h1>
+    
+    <table id="texts">
+      
+    </table>
     <form id="form" action="#" onsubmit="submitButtonClick()">
       <input type="text" aria-label="Text Form" placeholder="Form" required=true id="field1">
       <input type="submit" value="submit">
     </form>
-    <div id="firebaseui-auth-container"></div>
+    <p id="errors"></p>
+    <button onclick="javascript: signIn()">Sign In</button>
+    <button onclick="javascript: signOut()">Sign Out</button>
+    <!-- <div id="firebaseui-auth-container"></div> -->
   </body>
-</html>>
+</html>
