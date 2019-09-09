@@ -10,7 +10,8 @@ var config = {
 };
 firebase.initializeApp(config);
 //
-
+// window.$ = window.jQuery = require('jquery'); // not sure if you need this at all
+// window.Bootstrap = require('bootstrap');
 // Define database as firestore
 database = firebase.firestore()
 
@@ -131,7 +132,30 @@ function jsDateToEpoch(d){
   return (d.getTime()-d.getMilliseconds())/1000;
 }
 
-function signIn() {
+function newUser(){
+  email = document.getElementById("emailfieldsu").value;
+  password = document.getElementById("passwordfieldsu").value;
+  // console.log("error is firebase");
+  firebase.auth().createUserWithEmailAndPassword(email, password).catch(function(error) {
+    // Handle errors here
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    console.log("Error (code " + error.code + "): " + error.message );
+  });
+}
+
+function signIn(){
+  email = document.getElementById("emailfieldli").value;
+  password = document.getElementById("passwordfieldli").value;
+  // console.log("error is firebase");
+  firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+    // Handle errors here
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    console.log("Error (code " + error.code + "): " + error.message );
+  });
+}
+function signInWithGoogle() {
   // Sign into Firebase using popup auth & Google as the identity provider.
   var provider = new firebase.auth.GoogleAuthProvider();
   firebase.auth().signInWithPopup(provider);
@@ -185,16 +209,5 @@ function isUserSignedIn() {
 //   ],
 //   // Other config options...
 // });
-
-function newUser(){
-  email = document.getElementById("emailfield").value;
-  password = document.getElementById("passwordfield").value;
-  firebase.auth().createUserWithEmailAndPassword(email, password).catch(function(error) {
-    // Handle errors here
-    var errorCode = error.code;
-    var errorMessage = error.message;
-    console.log("Error (code " + error.code + "): " + error.message );
-  });
-}
 
 loadTexts();
